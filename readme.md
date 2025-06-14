@@ -1,4 +1,4 @@
-# Avaliação Interativa de Lógica com JavaScript
+# Avaliação Interativa de Lógica com JavaScript (https://claytoneduard.github.io/Simulado-Javascript-Basico/)
 
 **Este é um projeto de uma página (Single Page Application - SPA) que oferece uma avaliação interativa de lógica de programação utilizando JavaScript puro, HTML e Tailwind CSS. O objetivo é proporcionar uma ferramenta simples e eficaz para testar conhecimentos básicos de JavaScript e, ao mesmo tempo, servir como um exemplo prático de aplicação web interativa.**
 
@@ -6,11 +6,12 @@
 
 * **Questões Interativas:** Uma série de questões de lógica e sintaxe JavaScript, com campos para preencher código ou respostas.
 * **Verificação de Resposta Imediata:** Feedback visual instantâneo (Correto/Incorreto) para cada questão.
-* **Persistência de Progresso:** O progresso do usuário é salvo automaticamente no `<span class="selected">`localStorage do navegador, permitindo que o aluno continue de onde parou.
+* **Persistência de Progresso:** O progresso do usuário é salvo automaticamente no <span class="selected">localStorage</span> do navegador, permitindo que o aluno continue de onde parou.
 * **Resumo de Desempenho Visual:** Após "Finalizar Avaliação", um modal exibe um gráfico de pizza (usando Chart.js) mostrando a proporção de acertos, erros e questões não respondidas.
 * **Geração de Respostas para Envio:** Um modal dedicado gera um resumo detalhado de todas as respostas do aluno, incluindo o status de cada questão, que pode ser facilmente copiado para envio ao professor via e-mail.
 * **Reinício Claro da Avaliação:** Um botão específico "Reiniciar Avaliação" permite que o usuário apague todo o progresso e comece a avaliação do zero de forma intencional.
 * **Dialog Suas Sespostas para Envio :** permite visualizar suas perguntas com status respondidos.
+![image](https://github.com/user-attachments/assets/6cb22093-7c59-4c2a-bfa6-f99175c59201)
 
 ## Como Usar
 
