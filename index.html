@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação Interativa de Lógica com JavaScript</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            /* Permite que o código mantenha a indentação e quebras de linha */
+        }
+
+        /* Definindo larguras para os diferentes tipos de input de solução */
+        .solution-input-lg {
+            /* Para placeholders longos */
+            width: 150px;
+            /* Ajuste conforme necessário */
+        }
+
+        .solution-input-md {
+            /* Para placeholders médios (palavras-chave) */
+            width: 100px;
+            /* Ajuste conforme necessário */
+        }
+
+        .solution-input-sm {
+            /* Para placeholders curtos (números, parâmetros simples) */
+            width: 70px;
+            /* Ajuste conforme necessário */
+        }
+
+        .input-code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #334155;
+            color: #f1f5f9;
+            border: 1px solid #475569;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            display: inline-block;
+            /* Para que os inputs fiquem na linha do texto */
+            vertical-align: middle;
+            /* Para alinhar com o texto ao redor */
+        }
+
+        .textarea-code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            width: 100%;
+            min-height: 100px;
+        }
+
+        .question-card {
+            transition: all 0.3s ease-in-out;
+            border: 1px solid transparent;
+        }
+
+        .correct-card {
+            background-color: #f0fdf4;
+            border-left: 5px solid #22c55e;
+        }
+
+        .incorrect-card {
+            background-color: #fef2f2;
+            border-left: 5px solid #ef4444;
+        }
+
+        .feedback {
+            transition: opacity 0.3s;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+
+        /* Table Styling for Submission Modal */
+        #results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        #results-table th,
+        #results-table td {
+            border: 1px solid #cbd5e1;
+            /* slate-300 */
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        #results-table th {
+            background-color: #e2e8f0;
+            /* slate-200 */
+            font-weight: bold;
+            color: #1e293b;
+            /* slate-900 */
+        }
+
+        #results-table tbody tr:nth-child(odd) {
+            background-color: #f8fafc;
+            /* slate-50 */
+        }
+
+        #results-table tbody tr:hover {
+            background-color: #f0f4f8;
+            /* A slightly darker slate-50 on hover */
+        }
+
+        .status-correct {
+            color: #16a34a;
+            /* green-600 */
+            font-weight: 500;
+        }
+
+        .status-incorrect {
+            color: #dc2626;
+            /* red-600 */
+            font-weight: 500;
+        }
+
+        .status-unanswered {
+            color: #475569;
+            /* slate-600 */
+            font-weight: 500;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Avaliação de Lógica com JavaScript</h1>
+            <p class="text-slate-600 mt-2">Teste os seus conhecimentos de forma interativa!</p>
+        </header>
+
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-8 rounded-r-lg" role="alert">
+            <p class="font-bold">Instruções</p>
+            <p>Leia cada questão, preencha o código e clique em "Verificar Resposta" para obter feedback imediato. Ao
+                final, clique em "Finalizar Avaliação" para ver a sua pontuação. Para enviar as suas respostas, clique
+                em "Gerar Respostas para Envio".</p>
+        </div>
+
+        <div id="quiz-container">
+        </div>
+
+        <div class="mt-10 text-center flex flex-col md:flex-row justify-center items-center gap-4">
+            <button id="finish-btn"
+                class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 shadow-lg w-full md:w-auto">
+                Finalizar Avaliação
+            </button>
+            <button id="generate-submission-btn"
+                class="bg-purple-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-purple-700 transition-transform transform hover:scale-105 shadow-lg w-full md:w-auto">
+                Gerar Respostas para Envio
+            </button>
+            <button id="reset-quiz-btn"
+                class="bg-red-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-red-700 transition-transform transform hover:scale-105 shadow-lg w-full md:w-auto">
+                Reiniciar Avaliação
+            </button>
+
+        </div>
+    </div>
+
+    <div id="results-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full text-center transform scale-95 transition-transform duration-300">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4">O Seu Desempenho</h2>
+            <div class="chart-container mb-6">
+                <canvas id="results-chart"></canvas>
+            </div>
+            <p id="score-text" class="text-lg text-slate-700 font-medium mb-6"></p>
+            <button id="close-results-modal-btn"
+                class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <div id="submission-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 max-w-2xl w-full text-center transform scale-95 transition-transform duration-300">
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4">Suas Respostas para Envio</h2>
+            <p class="text-slate-600 mb-4">Reveja o seu desempenho e copie o resumo para enviar.</p>
+
+            <div class="overflow-x-auto mb-6">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Questão</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Results will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <p id="submission-summary" class="text-lg text-slate-700 font-medium mb-4"></p>
+
+            <p class="text-slate-600 mb-2">Copie o resumo abaixo e envie para o seu professor:</p>
+            <a id="teacher-email-link" class="text-blue-600 hover:underline font-bold text-lg mb-4 block"></a>
+
+            <textarea id="submission-output" class="textarea-code mb-4" readonly style="min-height: 180px;"></textarea>
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="copy-submission-btn"
+                    class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                    Copiar Resumo Completo
+                </button>
+                <button id="close-submission-modal-btn"
+                    class="bg-slate-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-slate-600 transition-colors">
+                    Fechar
+                </button>
+                <button id="screenshot-btn"
+                    class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 shadow-lg w-full md:w-auto">Tirar
+                    Print do Resumo</button>
+            </div>
+            <div id="copy-feedback" class="text-green-600 mt-2 hidden">Resumo copiado!</div>
+        </div>
+    </div>
+
+
+    <script>
+        const QUIZ_STORAGE_KEY = 'javascriptQuizProgress';
+        const TEACHER_EMAIL = 'clayton.eduard@gmail.com'; // Seu e-mail
+
+        const quizData = [
+            {
+                title: "Questão 1: A Mensagem do Robô",
+                description: "Declare as variáveis `nomeDoUsuario` e `idadeDoUsuario` com as palavras-chave corretas e use-as para completar a mensagem.",
+                code: `// Declarações de variáveis
+_________ nomeDoUsuario = "Clayton";
+
+_________ idadeDoUsuario = 35;
+
+// Complete a mensagem
+console.log("Olá, " + _______________ + "! Você tem " + _______________ + " anos.");`,
+                type: 'fill',
+                inputs: 4,
+                solution: ['const', 'let', 'nomeDoUsuario', 'idadeDoUsuario']
+            },
+            {
+                title: "Questão 2: Calculadora de Quadrados",
+                description: "Complete a função `calcularQuadrado` para que ela receba um `numero` como parâmetro e retorne o seu quadrado.",
+                code: `function calcularQuadrado(______) {
+  // O seu código aqui
+  return numero * numero;
+}
+
+console.log(calcularQuadrado(5)); // Deve imprimir: 25`,
+                type: 'fill',
+                inputs: 1,
+                solution: ['numero']
+            },
+            {
+                title: "Questão 3: A Série Numérica Secreta",
+                description: "Complete o laço `for` para imprimir a sequência de números pares de 2 a 10.",
+                code: `for (let i = ______; i <= ______; i = i + ______) {
+  console.log(i);
+}`,
+                type: 'fill',
+                inputs: 3,
+                solution: ['2', '10', '2']
+            },
+            {
+                title: "Questão 4: Mensagem Persistente",
+                description: "Complete o laço `do...while` para que ele seja executado pelo menos uma vez. Este tipo de laço é ideal quando a ação deve ocorrer antes da verificação.",
+                code: `let condicao = false;
+______ {
+  console.log("Executou pelo menos uma vez!");
+} ______ (condicao);`,
+                type: 'fill',
+                inputs: 2,
+                solution: ['do', 'while']
+            },
+            {
+                title: "Questão 5: Detalhes do Item Mágico",
+                description: "Use o laço `for...in` para listar todas as propriedades e valores do objeto `itemMagico`.",
+                code: `const itemMagico = {
+  nome: "Espada Flamejante",
+  ataque: 50,
+  raridade: "Lendária"
+};
+
+// O seu código aqui:`,
+                type: 'code',
+                solution: `for (let propriedade in itemMagico) {
+  console.log(propriedade + ': ' + itemMagico[propriedade]);
+}`
+            },
+            {
+                title: "Questão 6: É Maior de Idade?",
+                description: "Crie o corpo da função `ehMaiorDeIdade`. Ela deve receber uma `idade` e retornar `true` se for 18 ou mais, e `false` caso contrário.",
+                code: `function ehMaiorDeIdade(idade) {
+  // O seu código aqui
+}`,
+                type: 'code',
+                solution: `return idade >= 18;`
+            },
+            {
+                title: "Questão 7: Contagem Invertida",
+                description: "Escreva um laço `for` que imprima no console os números de 20 até 0, contando de 5 em 5.",
+                code: `// O seu código aqui:`,
+                type: 'code',
+                solution: `for (let i = 20; i >= 0; i -= 5) {
+  console.log(i);
+}`
+            },
+            {
+                title: "Questão 8: Encontrando o Erro",
+                description: "O código abaixo não funciona. Corrija-o para que ele retorne e imprima o valor `20`. O problema é o escopo da variável.",
+                code: `function calcularDobro() {
+  var numeroA = 10;
+  let resultado = numeroA * 2;
+}
+
+console.log(resultado); // Erro!`,
+                type: 'code',
+                solution: `function calcularDobro() {
+  var numeroA = 10;
+  let resultado = numeroA * 2;
+  return resultado;
+}
+
+console.log(calcularDobro());`
+            },
+            {
+                title: "Questão 9: Quando Usar Cada Laço?",
+                description: "Explique a principal diferença entre `for` e `do...while`. Não há verificação automática, a resposta visa a reflexão.",
+                code: `// A sua explicação aqui:`,
+                type: 'code',
+                solution: `O laço 'for' é usado quando sabemos o número de iterações. O 'do...while' é usado quando o bloco de código precisa ser executado pelo menos uma vez, e a condição é verificada no final.`
+            },
+            {
+                title: "Questão 10: O Diário de Bordo",
+                description: "Complete a função `lerDiario` para que ela use um laço e imprima as mensagens de cada dia do diário.",
+                code: `const diarioDeBordo = {
+  dia1: { mensagem: "A jornada começou." },
+  dia2: { mensagem: "Encontramos um novo caminho." }
+};
+
+function lerDiario(diario) {
+  // O seu código aqui:
+}`,
+                type: 'code',
+                solution: `for (let dia in diario) {
+  console.log(dia + ': ' + diario[dia].mensagem);
+}`
+            }
+        ];
+
+        const QUIZ_CONTAINER = document.getElementById('quiz-container');
+        let userProgress = new Array(quizData.length).fill({ inputs: [], correct: null, attempted: false });
+        let myChart;
+
+        function saveProgressToLocalStorage() {
+            try {
+                localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(userProgress));
+            } catch (e) {
+                console.error("Erro ao salvar no localStorage:", e);
+            }
+        }
+
+        function loadProgressFromLocalStorage() {
+            try {
+                const storedProgress = localStorage.getItem(QUIZ_STORAGE_KEY);
+                if (storedProgress) {
+                    userProgress = JSON.parse(storedProgress);
+                    if (userProgress.length !== quizData.length) {
+                        userProgress = new Array(quizData.length).fill({ inputs: [], correct: null, attempted: false });
+                        saveProgressToLocalStorage();
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao carregar do localStorage:", e);
+                localStorage.removeItem(QUIZ_STORAGE_KEY);
+            }
+        }
+
+        function renderQuiz() {
+            QUIZ_CONTAINER.innerHTML = '';
+            loadProgressFromLocalStorage();
+
+            quizData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.id = `question-${index}`;
+                card.className = 'question-card bg-white p-6 rounded-lg shadow-md mb-6';
+
+                let inputHtml = '';
+                if (q.type === 'fill') {
+                    let codeWithInputs = q.code;
+                    // Substitui marcadores específicos por campos de input com larguras diferentes
+                    codeWithInputs = codeWithInputs.replace(/_______________/g, () => `<input type="text" class="input-code solution-input-lg solution-input">`);
+                    codeWithInputs = codeWithInputs.replace(/_________/g, () => `<input type="text" class="input-code solution-input-md solution-input">`);
+                    codeWithInputs = codeWithInputs.replace(/______/g, () => `<input type="text" class="input-code solution-input-sm solution-input">`);
+
+                    inputHtml = `<div class="code-block">${codeWithInputs}</div>`;
+                } else if (q.type === 'code') {
+                    inputHtml = `<div class="code-block">${q.code}</div><textarea class="textarea-code mt-4 solution-input" spellcheck="false"></textarea>`;
+                }
+
+                card.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">${q.title}</h3>
+                    <p class="text-slate-600 mb-4">${q.description}</p>
+                    ${inputHtml}
+                    <div class="mt-4">
+                        <button class="verify-btn bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors" data-index="${index}">Verificar Resposta</button>
+                    </div>
+                    <div class="feedback mt-4 p-3 rounded-md text-sm hidden"></div>
+                `;
+                QUIZ_CONTAINER.appendChild(card);
+
+                const currentProgress = userProgress[index];
+                if (currentProgress && currentProgress.attempted) {
+                    const inputs = card.querySelectorAll('.solution-input');
+                    if (q.type === 'fill') {
+                        inputs.forEach((input, i) => {
+                            if (currentProgress.inputs[i] !== undefined) {
+                                input.value = currentProgress.inputs[i];
+                            }
+                        });
+                    } else if (q.type === 'code') {
+                        if (inputs[0] && currentProgress.inputs[0] !== undefined) {
+                            inputs[0].value = currentProgress.inputs[0];
+                        }
+                    }
+                    applyFeedbackStyling(card, currentProgress.correct);
+                }
+            });
+        }
+
+        QUIZ_CONTAINER.addEventListener('input', function (e) {
+            if (e.target.classList.contains('solution-input')) {
+                const card = e.target.closest('.question-card');
+                const index = parseInt(card.id.replace('question-', ''));
+                const question = quizData[index];
+                const inputs = card.querySelectorAll('.solution-input');
+
+                let currentInputs = [];
+                if (question.type === 'fill') {
+                    currentInputs = Array.from(inputs).map(input => input.value.trim());
+                } else if (question.type === 'code') {
+                    currentInputs = [inputs[0].value];
+                }
+
+                userProgress[index] = { inputs: currentInputs, correct: null, attempted: false };
+                saveProgressToLocalStorage();
+            }
+        });
+
+        QUIZ_CONTAINER.addEventListener('click', function (e) {
+            if (e.target.classList.contains('verify-btn')) {
+                const index = parseInt(e.target.getAttribute('data-index'));
+                checkAnswer(index);
+            }
+        });
+
+        function normalizeCode(str) {
+            // Remove espaços no início/fim de cada linha e linhas vazias
+            return str
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+                .join('\n');
+        }
+
+        function applyFeedbackStyling(card, isCorrect) {
+            const feedbackEl = card.querySelector('.feedback');
+            feedbackEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            card.classList.remove('correct-card', 'incorrect-card');
+
+            if (isCorrect) {
+                feedbackEl.textContent = 'Correto! Ótimo trabalho!';
+                feedbackEl.classList.add('bg-green-100', 'text-green-800');
+                card.classList.add('correct-card');
+            } else {
+                let helpText = 'Incorreto. Tente novamente!';
+                const index = parseInt(card.id.replace('question-', ''));
+                const question = quizData[index];
+                // Apenas mostra a solução esperada se não for a questão 9 (explicação)
+                if (question.type === 'code' && index !== 8) {
+                    helpText += `\nSolução esperada (após normalização de espaços):\n\n${question.solution}`;
+                }
+                feedbackEl.textContent = helpText;
+                feedbackEl.style.whiteSpace = 'pre-wrap';
+                feedbackEl.classList.add('bg-red-100', 'text-red-800');
+                card.classList.add('incorrect-card');
+            }
+        }
+
+        function checkAnswer(index) {
+            const question = quizData[index];
+            const card = document.getElementById(`question-${index}`);
+            const inputs = card.querySelectorAll('.solution-input');
+
+            let isCorrect = false;
+            let currentInputs = [];
+
+            if (question.type === 'fill') {
+                const userValues = Array.from(inputs).map(input => {
+                    currentInputs.push(input.value.trim());
+                    return input.value.trim();
+                });
+                isCorrect = userValues.every((val, i) => val.toLowerCase() === question.solution[i].toLowerCase());
+            } else if (question.type === 'code') {
+                const userCode = normalizeCode(inputs[0].value);
+                currentInputs.push(inputs[0].value);
+                const solutionCode = normalizeCode(question.solution);
+                isCorrect = userCode === solutionCode;
+            }
+
+            userProgress[index] = { inputs: currentInputs, correct: isCorrect, attempted: true };
+            saveProgressToLocalStorage();
+            applyFeedbackStyling(card, isCorrect);
+        }
+
+        // Declarações de variáveis globais para elementos DOM
+        let finishBtn;
+        let resultsModal;
+        let closeResultsModalBtn;
+        let scoreText;
+        let generateSubmissionBtn;
+        let submissionModal;
+        let resultsTableBody;
+        let submissionSummary;
+        let copySubmissionBtn;
+        let closeSubmissionModalBtn;
+        let copyFeedback;
+        let teacherEmailLink;
+        let resetQuizBtn;
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Atribuição de referências aos elementos DOM
+            finishBtn = document.getElementById('finish-btn');
+            resultsModal = document.getElementById('results-modal');
+            closeResultsModalBtn = document.getElementById('close-results-modal-btn');
+            scoreText = document.getElementById('score-text');
+            generateSubmissionBtn = document.getElementById('generate-submission-btn');
+            submissionModal = document.getElementById('submission-modal');
+            resultsTableBody = document.querySelector('#results-table tbody');
+            submissionSummary = document.getElementById('submission-summary');
+            copySubmissionBtn = document.getElementById('copy-submission-btn');
+            closeSubmissionModalBtn = document.getElementById('close-submission-modal-btn');
+            copyFeedback = document.getElementById('copy-feedback');
+            teacherEmailLink = document.getElementById('teacher-email-link');
+            resetQuizBtn = document.getElementById('reset-quiz-btn');
+            // Garante que o elemento submission-output existe
+            if (!document.getElementById('submission-output')) {
+                const textarea = document.createElement('textarea');
+                textarea.id = 'submission-output';
+                textarea.className = 'textarea-code mb-4';
+                textarea.readOnly = true;
+                textarea.style.minHeight = '180px';
+                document.body.appendChild(textarea);
+            }
+
+            // Configurar o link de e-mail do professor
+            if (teacherEmailLink) {
+                teacherEmailLink.href = `mailto:${TEACHER_EMAIL}`;
+                teacherEmailLink.textContent = TEACHER_EMAIL;
+            }
+
+            // Event Listener para o botão "Finalizar Avaliação"
+            finishBtn.addEventListener('click', () => {
+                let correctCount = 0;
+                let incorrectCount = 0;
+                let unansweredCount = 0;
+
+                userProgress.forEach(progress => {
+                    if (progress.correct === true) {
+                        correctCount++;
+                    } else if (progress.correct === false) {
+                        incorrectCount++;
+                    } else {
+                        unansweredCount++;
+                    }
+                });
+
+                scoreText.textContent = `Você acertou ${correctCount} de ${quizData.length} questões.`;
+
+                const ctx = document.getElementById('results-chart').getContext('2d');
+
+                if (myChart) {
+                    myChart.destroy();
+                }
+
+                myChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Corretas', 'Incorretas', 'Não respondidas'],
+                        datasets: [{
+                            data: [correctCount, incorrectCount, unansweredCount],
+                            backgroundColor: [
+                                '#22c55e',
+                                '#ef4444',
+                                '#64748b'
+                            ],
+                            borderColor: '#ffffff',
+                            borderWidth: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return `${context.label}: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                resultsModal.classList.remove('hidden');
+                setTimeout(() => {
+                    resultsModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            });
+
+            // Event Listener para o botão "Fechar" do modal de desempenho (não reinicia a avaliação)
+            closeResultsModalBtn.addEventListener('click', () => {
+                resultsModal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => {
+                    resultsModal.classList.add('hidden');
+                    // AQUI NÃO LIMPA O localStorage NEM REINICIA O QUIZ
+                }, 300);
+            });
+
+            // Event Listener para o NOVO botão "Reiniciar Avaliação"
+            if (resetQuizBtn) { // Verificação para garantir que o botão existe
+                resetQuizBtn.addEventListener('click', () => {
+                    if (confirm('Tem certeza que deseja reiniciar a avaliação? Todo o seu progresso será perdido.')) {
+                        localStorage.removeItem(QUIZ_STORAGE_KEY);
+                        userProgress = new Array(quizData.length).fill({ inputs: [], correct: null, attempted: false });
+                        renderQuiz(); // Re-renderiza o quiz para mostrar o estado reiniciado
+                        alert('Avaliação reiniciada com sucesso!'); // Feedback ao usuário
+                    }
+                });
+            }
+
+            // Event Listener para o botão "Gerar Respostas para Envio"
+            generateSubmissionBtn.addEventListener('click', () => {
+                resultsTableBody.innerHTML = ''; // Limpa a tabela antes de preencher
+
+                let correctCount = 0;
+                let incorrectCount = 0;
+                let unansweredCount = 0;
+
+                let submissionTextContent = `Avaliação de Lógica com JavaScript - Resumo:\n\n`;
+
+                userProgress.forEach((progress, index) => {
+                    const question = quizData[index];
+                    let statusText = '';
+                    let statusClass = '';
+
+                    if (progress.correct === true) {
+                        statusText = 'Correto';
+                        statusClass = 'status-correct';
+                        correctCount++;
+                    } else if (progress.correct === false) {
+                        statusText = 'Incorreto';
+                        statusClass = 'status-incorrect';
+                        incorrectCount++;
+                    } else {
+                        statusText = 'Não Respondida';
+                        statusClass = 'status-unanswered';
+                        unansweredCount++;
+                    }
+
+                    const row = resultsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>Questão ${index + 1}: ${question.title}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                    `;
+
+                    submissionTextContent += `--- Questão ${index + 1}: ${question.title} ---\n`;
+                    if (progress.attempted) {
+                        if (question.type === 'fill') {
+                            submissionTextContent += `Tipo: Completar\n`;
+                            submissionTextContent += `As suas respostas: ${progress.inputs.join(', ')}\n`;
+                        } else if (question.type === 'code') {
+                            submissionTextContent += `Tipo: Código\n`;
+                            submissionTextContent += `O seu código:\n\`\`\`javascript\n${progress.inputs[0] || ''}\n\`\`\`\n`;
+                        }
+                        submissionTextContent += `Status: ${statusText}\n\n`;
+                    } else {
+                        submissionTextContent += `Não respondida.\n\n`;
+                    }
+                });
+
+                submissionSummary.textContent = `Total: ${correctCount} corretas, ${incorrectCount} incorretas, ${unansweredCount} não respondidas.`;
+
+                // Obtém a referência ao elemento aqui, no momento em que o modal será exibido
+                const submissionOutputElement = document.getElementById('submission-output');
+                if (submissionOutputElement) {
+                    submissionOutputElement.value = submissionTextContent + `\n\nEnviar para: ${TEACHER_EMAIL}`;
+                } else {
+                    console.error("Erro: Elemento 'submission-output' não encontrado ao preencher.");
+                }
+
+                submissionModal.classList.remove('hidden');
+                setTimeout(() => {
+                    submissionModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            });
+
+
+            // Event Listener para o botão "Copiar Resumo Completo"
+            copySubmissionBtn.addEventListener('click', () => {
+                // Obtém a referência ao elemento aqui, no momento do clique
+                const submissionOutputElement = document.getElementById('submission-output');
+                if (submissionOutputElement) {
+                    const textToCopy = submissionOutputElement.value;
+                    navigator.clipboard.writeText(textToCopy)
+                        .then(() => {
+                            copyFeedback.classList.remove('hidden');
+                            setTimeout(() => {
+                                copyFeedback.classList.add('hidden');
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Erro ao copiar para a área de transferência:', err);
+                            alert('Falha ao copiar. Verifique se seu navegador permite o uso da área de transferência.');
+                        });
+
+                } else {
+                    console.error("Erro: Elemento 'submission-output' não encontrado para copiar.");
+                }
+            });
+
+            // Event Listener para o botão "Fechar" do modal de envio
+            closeSubmissionModalBtn.addEventListener('click', () => {
+                submissionModal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => {
+                    submissionModal.classList.add('hidden');
+                }, 300);
+            });
+            // Adiciona um pequeno delay para garantir que o modal esteja visível antes do print
+            document.getElementById('screenshot-btn').addEventListener('click', () => {
+                setTimeout(() => {
+                    html2canvas(document.getElementById('submission-modal')).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        const win = window.open('');
+                        win.document.write(`<img src="${imgData}" alt="Resumo da Avaliação">`);
+                    });
+                }, 300); // 300ms de atraso
+            });
+
+            // Renderização inicial do quiz
+            renderQuiz();
+        });
+
+    </script>
+</body>
+
+</html>
